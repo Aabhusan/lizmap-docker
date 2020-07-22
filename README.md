@@ -1,94 +1,107 @@
-[![logo](icon.png "3Liz")][3liz]Lizmap Web Application 3.4.0pre
-----------------------------------------------------------------
+# Lizmap web client Docker image with WPS support
 
-Lizmap web application, by 3LIZ.
-
-    begin       : 2011-11-01
-    copyright   : (C) 2011-2020 by 3liz
-    authors     : René-Luc D'Hont and Michaël Douchin
-    email       : info@3liz.com
-    website     : http://www.3liz.com
-
-![demo](demo.jpg "3Liz")
-
-Lizmap Web Application generates dynamically a web map application (php/html/css/js) with the help of QGIS Server ( [QGIS as OGC Data Server] ). You can visit [some examples projects on the demo](https://demo.lizmap.com/lizmap/).
-You can configure one web map per QGIS project with the QGIS Lizmap plugin. From this plugin, you can enable some tools such as attribute table, dataviz, printing ...
-The Lizmap web application must be installed on the server.
-
-The Original Code is [3liz](https://3liz.com) code.
-
-You can find help and news by subscribing to the mailing list: https://lists.osgeo.org/mailman/listinfo/lizmap.
-
-Versions
---------
-
-We recommend you reading the [versions](https://github.com/3liz/lizmap-web-client/wiki/Versions) page about QGIS Server, webbrowsers etc.
-
-Documentation and customization
---------------
-
-https://docs.lizmap.com/
-
-Documentation source: https://github.com/3liz/lizmap-documentation/
-
-You can add your custom Javascript, check your [Javascript library](https://github.com/3liz/lizmap-javascript-scripts/)
-
-Some modules can be added to Lizmap:
-* Map Builder https://github.com/3liz/lizmap-mapbuilder-module
-* Naturaliz https://github.com/3liz/lizmap-naturaliz-module
-* French Cadastre https://github.com/3liz/lizmap-cadastre-module
-* French Adresse https://github.com/3liz/lizmap-adresse-module
-
-Internationalization
----------------------
-
-Transifex: https://www.transifex.com/3liz-1/lizmap-locales/
-
-Locales source: https://github.com/3liz/lizmap-locales/
-
-Authors
--------
-
-The Initial Developer of the Original Code are René-Luc D'Hont <rldhont@3liz.com> and Michael Douchin <mdouchin@3liz.com>.
-Portions created by the Initial Developer are Copyright (C) 2011 the Initial Developer.
-All Rights Reserved.
-
-Contributors
---------------
-
-* Paolo Cavallini
-* Salvatore Larosa
-* Giovanni Manghi
-* Laurent Jouanneau
-* José Macau
-* David Marteau
-* Vitor Jorge
-* Nicolas Boisteault
-* Arnaud Deleurme
-* Víctor Herreros
-* Aitor Gil
-* Felix Kuehne
-* João Gaspar
-* Sławomir Bienias
-* Petr Tsymbarovich
-* Alessandro Fanna
-* Marta Puppo
-* Pietro Rossin
-* Kari Salovaara
-* Xan Vieiro
-* Rasmus Johansson
-* Jankó J A
-
-License
--------
-Version: MPL 2.0/GPL 2.0/LGPL 2.1
-
-The contents of this file are subject to the Mozilla Public License Version 2.0 (the "License"); you may not use this file except in compliance with the License. You may obtain a copy of the License at http://www.mozilla.org/MPL/
-
-Alternatively, the contents of this file may be used under the terms of either of the GNU General Public License Version 2 or later (the "GPL"), or the GNU Lesser General Public License Version 2.1 or later (the "LGPL"), in which case the provisions of the GPL or the LGPL are applicable instead of those above. If you wish to allow use of your version of this file only under the terms of either the GPL or the LGPL, and not to allow others to use your version of this file under the terms of the MPL, indicate your decision by deleting the provisions above and replace them with the notice and other provisions required by the GPL or the LGPL. If you do not delete the provisions above, a recipient may use your version of this file under the terms of any one of the MPL, the GPL or the LGPL.
-
-Software distributed under the License is distributed on an "AS IS" basis, WITHOUT WARRANTY OF ANY KIND, either express or implied. See the License for the specific language governing rights and limitations under the License.
+The container deploy one lizmap instance and may run php-fpm on commande line.
+(cf [docker/php](https://hub.docker.com/_/php/) )
 
 
-  [QGIS as OGC Data Server]: http://docs.qgis.org/testing/en/docs/user_manual/working_with_ogc/ogc_server_support.html
-  [3liz]:http://www.3liz.com
+## Configuration variables
+
+- LIZMAP\_WMSSERVERURL: URL of the OWS (WMS/WFS/WCS) service used by the WPS service 
+- LIZMAP\_DEBUGMODE: Error level INFO/DEBUG/ERROR/WARNING
+- LIZMAP\_CACHESTORAGETYPE: Always Use 'redis'
+- LIZMAP\_CACHEREDISHOST: Redis host
+- LIZMAP\_CACHEREDISPORT: Redis port (use default if not set)
+- LIZMAP\_CACHEEXPIRATION: Lizmap cache expiration time 
+- LIZMAP\_CACHEREDISDB:  Redis Database index used 
+- LIZMAP\_CACHEREDISKEYPREFIX: the redis key prefix to use
+- LIZMAP\_USER: User used to run Lizmap
+- LIZMAP\_HOME: The root path for web files used from the web server
+- LIZMAP\_THEME: Lizmap theme to use
+
+**Important**: LIZMAP\_HOME is the prefix of the path towards lizmap web files (lizmap/www). This prefix
+must be identical to the one given in the nginx *root* directive, ex:
+```
+root <LIZMAP_HOME>/www
+```
+
+### Tuning PHP Variables
+- PM_MAX_CHILDREN: Maximum number of child processes.
+- PM_START_SERVERS: The number of child processes created on startup.
+- PM_MIN_SPARE_SERVERS: The desired minimum number of idle server processes.
+- PM_MAX_SPARE_SERVERS: The desired maximum number of idle server processes.
+- PM_CHILD_PROCESS: Control the number of child processes values can be (static,dynamic,ondemand)
+- PM_MAX_REQUESTS: The number of requests each child process should execute before respawning
+- PM_PROCESS_IDLE_TIMEOUT: The number of seconds after which an idle process will be killed.
+
+For more information about these read [PHP](https://www.php.net/manual/en/install.fpm.configuration.php)
+## Volumes
+
+The following volumes are used:
+
+- /srv/projects (required)
+- /www/lizmap/var/config (required)
+- /www/lizmap/var/lizmap-theme-config (required)
+- /www/lizmap/var/db (required)
+- /www/lizmap/var/log (recommended)
+- /www/lizmap/www (required)
+
+**Important**: The folder /www/lizmap/www must be binded to a directory that is accessible to the web server (see note above)
+
+## Docker compose configuration example
+
+```
+lizmap:
+    image: lizmap-wps-web-client:3.2
+    command: 
+      - php-fpm
+    environment:
+      LIZMAP_WPS_URL: http://wps:8080/ # According to your configuration
+      LIZMAP_CACHESTORAGETYPE: redis   
+      LIZMAP_CACHEREDISDB: '1'
+      LIZMAP_USER: '1010'
+      LIZMAP_WMSSERVERURL: http://map:8080/ows/
+      LIZMAP_CACHEREDISHOST: redis
+      LIZMAP_HOME: /srv/lizmap/
+    volumes:
+      - /srv/lizmap/instances:/srv/projects
+      - /srv/lizmap/var/lizmap-theme-config:/www/lizmap/var/lizmap-theme-config
+      - /srv/lizmap/var/lizmap-config:/www/lizmap/var/config
+      - /srv/lizmap/var/lizmap-db:/www/lizmap/var/db
+      - /srv/lizmap/www:/www/lizmap/www
+      - /var/log/lizmap:/www/lizmap/var/log
+```
+
+## nginx example config
+
+```
+server {
+    listen 80;
+
+    server_name lizmap;
+   
+    root /srv/lizmap/www;  # See discussion about LIZMAP_HOME above
+    index index.html index.php;
+
+    access_log /var/log/nginx/lizmap_access.log;
+    error_log /var/log/nginx/lizmap_error.log;
+
+    # URI resolved to web sub directory
+    # and found a index.php file here
+    location ~* /(\w+/)?\w+\.php {
+
+        fastcgi_split_path_info ^(.+\.php)(/.+)$;
+        set $path_info $fastcgi_path_info; # because of bug http://trac.nginx.org/nginx/ticket/321
+
+        try_files $fastcgi_script_name =404;
+        include fastcgi_params;
+    
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $document_root$fastcgi_script_name;
+        fastcgi_param SERVER_NAME $http_host;
+        fastcgi_param PATH_INFO $path_info;
+        fastcgi_param PATH_TRANSLATED $document_root$path_info;
+        fastcgi_pass  <lizmap_host>:9000;
+    }
+}
+```
+
